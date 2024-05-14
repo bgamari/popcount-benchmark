@@ -19,6 +19,7 @@ main = defaultMain
     [ bench "ByteString.foldl" $ nf foldlPopcount benchData
     , bcompare "ByteString.foldl" $ bench "FFI popcount (capi)" $ nfAppIO (ffiPopcount c_popcount_capi) benchData
     , bcompare "ByteString.foldl" $ bench "FFI popcount (ccall)" $ nfAppIO (ffiPopcount c_popcount_ccall) benchData
+    , bcompare "ByteString.foldl" $ bench "FFI popcount2" $ nfAppIO (ffiPopcount c_popcount2) benchData
     ]
   ]
 
@@ -35,6 +36,9 @@ foreign import capi "popcount.h popcount"
 
 foreign import ccall "popcount.h popcount"
   c_popcount_ccall :: Ptr CChar -> CSize -> IO CSize
+
+foreign import ccall "popcount.h popcount2"
+  c_popcount2 :: Ptr CChar -> CSize -> IO CSize
 
 
 bytestring :: StrictByteString
