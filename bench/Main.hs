@@ -15,13 +15,23 @@ import Test.Tasty.Bench
 
 main :: IO ()
 main = defaultMain
-  [ env (evaluate (force bytestring)) $ \benchData ->  bgroup "Benchmark"
+  [ benchPopcount 16
+  , benchPopcount 256
+  , benchPopcount 1024
+  , benchPopcount (16*1024)
+  , benchPopcount (1024*1024)
+  ]
+
+benchPopcount :: Int -> Benchmark
+benchPopcount len =
+    env (evaluate (force bytestring)) $ \benchData -> bgroup ("Benchmark " ++ show len)
     [ bench "ByteString.foldl" $ nf foldlPopcount benchData
     , bcompare "ByteString.foldl" $ bench "FFI popcount (capi)" $ nfAppIO (ffiPopcount c_popcount_capi) benchData
     , bcompare "ByteString.foldl" $ bench "FFI popcount (ccall)" $ nfAppIO (ffiPopcount c_popcount_ccall) benchData
     , bcompare "ByteString.foldl" $ bench "FFI popcount2" $ nfAppIO (ffiPopcount c_popcount2) benchData
     ]
-  ]
+  where
+    !bytestring = testPattern len
 
 foldlPopcount :: StrictByteString -> Int
 foldlPopcount = ByteString.foldl' (\acc element -> acc + fromIntegral (popCount element)) 0
@@ -40,5 +50,5 @@ foreign import ccall "popcount.h popcount"
 foreign import ccall "popcount.h popcount2"
   c_popcount2 :: Ptr CChar -> CSize -> IO CSize
 
-bytestring :: StrictByteString
-bytestring = ByteString.replicate (1024*1024) 0xaa
+testPattern :: Int -> StrictByteString
+testPattern len = ByteString.replicate len 0xaa
