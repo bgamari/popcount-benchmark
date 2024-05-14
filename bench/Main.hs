@@ -17,7 +17,8 @@ main :: IO ()
 main = defaultMain
   [ env (evaluate (force bytestring)) $ \benchData ->  bgroup "Benchmark"
     [ bench "ByteString.foldl" $ nf foldlPopcount benchData
-    , bcompare "ByteString.foldl" $ bench "FFI popcount" $ nfAppIO (ffiPopcount c_popcount) benchData
+    , bcompare "ByteString.foldl" $ bench "FFI popcount (capi)" $ nfAppIO (ffiPopcount c_popcount_capi) benchData
+    , bcompare "ByteString.foldl" $ bench "FFI popcount (ccall)" $ nfAppIO (ffiPopcount c_popcount_ccall) benchData
     ]
   ]
 
@@ -30,7 +31,10 @@ ffiPopcount f string = ByteString.unsafeUseAsCStringLen string $ \(cString, len)
 {-# INLINE ffiPopcount #-}
 
 foreign import capi "popcount.h popcount"
-  c_popcount :: Ptr CChar -> Word8 -> IO Word8
+  c_popcount_capi :: Ptr CChar -> CSize -> IO CSize
+
+foreign import ccall "popcount.h popcount"
+  c_popcount_ccall :: Ptr CChar -> CSize -> IO CSize
 
 
 bytestring :: StrictByteString
